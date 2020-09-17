@@ -50,66 +50,71 @@ async def win(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!win <name>`")
         return 
-    if args[0] in scores:
-        scores[args[0]]["win"] += 1
+    name = args[0].capitalize()
+    if name in scores:
+        scores[name]["win"] += 1
         save()
-        await ctx.send(f"Win has been added to `{args[0]}`. Total wins for `{args[0]}` are now: `{scores[args[0]]['win']}`")
+        await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
     else:
-        await ctx.send(f"{args[0]} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")  
 
 @bot.command(brief = '!unwin <name>', description = 'Removes a win from a designated player')
 async def unwin(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!win <name>`")
         return 
-    if args[0] in scores:
-        if scores[args[0]]["win"] == 0:
-            await ctx.send(f"{args[0]} is already at 0 wins.")
+    name = args[0].capitalize()
+    if name in scores:
+        if scores[name]["win"] == 0:
+            await ctx.send(f"{name} is already at 0 wins.")
         else:
-            scores[args[0]]["win"] -= 1
+            scores[name]["win"] -= 1
             save()
-            await ctx.send(f"Win has been removed from `{args[0]}`. Total wins for `{args[0]}` are now: `{scores[args[0]]['win']}`")
+            await ctx.send(f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
     else:
-        await ctx.send(f"{args[0]} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")  
 
 @bot.command(brief = '!lost <name>', description = 'Adds a loss to a designated player')
 async def lose(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
-    if args[0] in scores:
-        scores[args[0]]["loss"] += 1
+    name = args[0].capitalize()
+    if name in scores:
+        scores[name]["loss"] += 1
         save()
-        await ctx.send(f"Loss has been added to `{args[0]}`. Total losses for `{args[0]}` are now: `{scores[args[0]]['loss']}`")
+        await ctx.send(f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
     else:
-        await ctx.send(f"{args[0]} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")  
 
 @bot.command(brief = '!unlose <name>', description = 'Removes a loss from a designated player')
 async def unlose(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
-    if args[0] in scores:
-        if scores[args[0]]["loss"] == 0:
-            await ctx.send(f"{args[0]} is already at 0 losses.")
+    name = args[0].capitalize()
+    if name in scores:
+        if scores[name]["loss"] == 0:
+            await ctx.send(f"{name} is already at 0 losses.")
         else:
-            scores[args[0]]["loss"] -= 1
+            scores[name]["loss"] -= 1
             save()
-            await ctx.send(f"Loss has been removed from `{args[0]}`. Total losses for `{args[0]}` are now: `{scores[args[0]]['loss']}`")
+            await ctx.send(f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
     else:
-        await ctx.send(f"{args[0]} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")  
 
 @bot.command(brief = '!add <name>', description = 'Adds a player to the leaderboards')
 async def add(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!add <name>`")
         return
-    if args[0] not in scores:
-        scores[args[0]] = {"win": 0, "loss": 0}
+    name = args[0].capitalize()
+    if name not in scores:
+        scores[name] = {"win": 0, "loss": 0}
         save()
-        await ctx.send(f"{args[0]} has been added to the leaderboards.")
+        await ctx.send(f"{name} has been added to the leaderboards.")
     else:
-        await ctx.send(f"{args[0]} already exists in the leaderboards.")
+        await ctx.send(f"{name} already exists in the leaderboards.")
 
 
 @bot.command(brief = '!remove <name>', description = 'Removes a player from the leaderboards')
@@ -117,12 +122,13 @@ async def remove(ctx, *args):
     if len(args) !=1:
         await ctx.send("Please provide a name `!remove <name>`")
         return
-    if args[0] in scores:
-        del scores[args[0]]
+    name = args[0].capitalize()
+    if name in scores:
+        del scores[name]
         save()
-        await ctx.send(f"{args[0]} has been removed from the leaderboards.")
+        await ctx.send(f"{name} has been removed from the leaderboards.")
     else:
-        await ctx.send(f"{args[0]} does not exist in the leaderboards.")   
+        await ctx.send(f"{name} does not exist in the leaderboards.")   
 
 @bot.command(pass_context = True , aliases = ['leaderboard', 'show', 'score', 'lits', 'lsit'], brief = '!list', description='Displays the leaderboard')
 async def list(ctx):
