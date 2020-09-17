@@ -1,5 +1,7 @@
 # michu bot
 
+<img src="https://cdn.discordapp.com/attachments/755958167908909108/756009280234324078/Untitled-1.png"  width="200" height="auto">
+
 ## Table of contents
 * [General info](#general-info)
 * [Setup](#setup)
