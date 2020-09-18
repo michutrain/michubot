@@ -1,8 +1,10 @@
 import os
 import discord
 import json
+import random
 
 from discord.ext import commands
+from discord.utils import get
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,55 +16,64 @@ if os.path.exists("leaderboard"):
 else:
     scores = {}
 
+
 def save():
     json.dump(scores, open("leaderboard", "w+"))
+
 
 @bot.event
 async def on_ready():
     print('bot is live')
 
-@bot.command(brief = '!ping', description = 'Pings the bot')
+
+@bot.command(brief='!ping', description='Pings the bot')
 async def ping(ctx):
     await ctx.send(f"`pong! the connection speed is {round (bot.latency * 1000)}ms`")
 
-@bot.command(brief = '!clear <number>', description = 'Deletes the previous n messages')
-async def clear(ctx, amount = 1):
-    await ctx.channel.purge(limit = amount + 1)
 
-@bot.command(brief = '!load <cog>', description = 'Loads cogs <deprecated>')
+@bot.command(brief='!clear <number>', description='Deletes the previous n messages')
+async def clear(ctx, amount=1):
+    await ctx.channel.purge(limit=amount + 1)
+
+
+@bot.command(brief='!load <cog>', description='Loads cogs <deprecated>')
 async def load(ctx, extension):
     bot.load_extension(f'cogs.{extension}')
     ctx.send("`Loaded`")
 
-@bot.command(brief = '!unload <cog>', description = 'Unloads cogs <deprecated>')
+
+@bot.command(brief='!unload <cog>', description='Unloads cogs <deprecated>')
 async def unload(ctx, extension):
     bot.unload_extension(f'cogs.{extension}')
     ctx.send("`Unloaded`'")
 
-@bot.command(brief = '!reload <cog>', description = 'Reloads cogs <deprecated>')
+
+@bot.command(brief='!reload <cog>', description='Reloads cogs <deprecated>')
 async def reload(ctx, extension):
     bot.load_extension(f'cogs.{extension}')
     bot.unload_extension(f'cogs.{extension}')
     ctx.send("`Reloaded`'")
 
-@bot.command(brief = '!win <name>', description = 'Adds a win to designated player')
+
+@bot.command(brief='!win <name>', description='Adds a win to designated player')
 async def win(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!win <name>`")
-        return 
+        return
     name = args[0].capitalize()
     if name in scores:
         scores[name]["win"] += 1
         save()
         await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
     else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
-@bot.command(brief = '!unwin <name>', description = 'Removes a win from a designated player')
+
+@bot.command(brief='!unwin <name>', description='Removes a win from a designated player')
 async def unwin(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!win <name>`")
-        return 
+        return
     name = args[0].capitalize()
     if name in scores:
         if scores[name]["win"] == 0:
@@ -72,11 +83,12 @@ async def unwin(ctx, *args):
             save()
             await ctx.send(f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
     else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
-@bot.command(brief = '!lost <name>', description = 'Adds a loss to a designated player')
+
+@bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
 async def lose(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
     name = args[0].capitalize()
@@ -85,11 +97,12 @@ async def lose(ctx, *args):
         save()
         await ctx.send(f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
     else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
-@bot.command(brief = '!unlose <name>', description = 'Removes a loss from a designated player')
+
+@bot.command(brief='!unlose <name>', description='Removes a loss from a designated player')
 async def unlose(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
     name = args[0].capitalize()
@@ -101,11 +114,12 @@ async def unlose(ctx, *args):
             save()
             await ctx.send(f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
     else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")  
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
-@bot.command(brief = '!add <name>', description = 'Adds a player to the leaderboards')
+
+@bot.command(brief='!add <name>', description='Adds a player to the leaderboards')
 async def add(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!add <name>`")
         return
     name = args[0].capitalize()
@@ -117,9 +131,9 @@ async def add(ctx, *args):
         await ctx.send(f"{name} already exists in the leaderboards.")
 
 
-@bot.command(brief = '!remove <name>', description = 'Removes a player from the leaderboards')
+@bot.command(brief='!remove <name>', description='Removes a player from the leaderboards')
 async def remove(ctx, *args):
-    if len(args) !=1:
+    if len(args) != 1:
         await ctx.send("Please provide a name `!remove <name>`")
         return
     name = args[0].capitalize()
@@ -128,11 +142,13 @@ async def remove(ctx, *args):
         save()
         await ctx.send(f"{name} has been removed from the leaderboards.")
     else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")   
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
-@bot.command(pass_context = True , aliases = ['leaderboard', 'show', 'score', 'lits', 'lsit'], brief = '!list', description='Displays the leaderboard')
+
+@bot.command(pass_context=True, aliases=['leaderboard', 'show', 'score', 'lits', 'lsit'], brief='!list', description='Displays the leaderboard')
 async def list(ctx):
     rows = [[key, scores[key]["win"], scores[key]["loss"]] for key in scores]
+    rows.sort(key=lambda x: x[1], reverse=True)
     cols = ["Player", "Wins", "Losses"]
     rows = [cols] + rows
 
@@ -140,19 +156,64 @@ async def list(ctx):
         col_size = max([len(str(row[col])) for row in rows])
 
         for row in rows:
-             row[col] = str(row[col]).ljust(col_size)
+            row[col] = str(row[col]).ljust(col_size)
 
     row_strings = ["║ " + " │ ".join(row) + " ║" for row in rows]
 
-    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╗"
-    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[2]) for s in rows]) + 2) + "╢"
-    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╝"
+    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1])
+                                                                                 for s in rows]) + 2) + "╤" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╗"
+    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1])
+                                                                                 for s in rows]) + 2) + "┼" + "─" * (max([len(s[2]) for s in rows]) + 2) + "╢"
+    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1])
+                                                                                 for s in rows]) + 2) + "╧" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╝"
 
-    row_strings = [line1] + row_strings[:1] + [line2] + row_strings[1:] + [line3]
+    row_strings = [line1] + row_strings[:1] + \
+        [line2] + row_strings[1:] + [line3]
     bigBlockOfText = "\n".join(row_strings)
-    ret = discord.Embed(title = "Valorant Leaderboard", description = f"```{bigBlockOfText}```", color=0x930101)
-    ret.set_thumbnail(url = "https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
-    ret.set_footer(text = "Type !help for a list of commands")
+    ret = discord.Embed(title="Valorant Leaderboard",
+                        description=f"```{bigBlockOfText}```", color=0x930101)
+    ret.set_thumbnail(
+        url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
+    ret.set_footer(text="Type !help for a list of commands")
     await ctx.send(embed=ret)
+
+
+@bot.command(brief='!game', description='Sends queue message')
+async def game(ctx):
+    emoji = '<:valorant:756270078156210177>'
+    maps = [
+        'Bind',
+        'Haven',
+        'Split',
+        'Ascent'
+    ]
+    message = await ctx.send(f"{emoji} `React to this message to signup for inhouse valorant!` {emoji}")
+    await message.add_reaction(emoji)
+
+    def check(reaction, user):
+        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 2
+
+    try:
+        reaction = await bot.wait_for('reaction_add', check=check)
+        await ctx.send("`The lobby has been filled.`")
+        response = random.choice(maps)
+        await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
+    except Exception as error:
+        print(error)
+
+
+
+@bot.command(brief='!map', description='Rolls the map pool')
+async def map(ctx):
+    maps = [
+        'Bind',
+        'Haven',
+        'Split',
+        'Ascent'
+    ]
+    emoji = '<:valorant:756270078156210177>'
+    response = random.choice(maps)
+    await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
+
 
 bot.run(TOKEN)
