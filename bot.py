@@ -181,23 +181,20 @@ async def list(ctx):
 @bot.command(brief='!game', description='Sends queue message')
 async def game(ctx):
     emoji = '<:valorant:756270078156210177>'
-    maps = [
-        'Bind',
-        'Haven',
-        'Split',
-        'Ascent'
-    ]
+    maps = ['Bind', 'Haven', 'Split', 'Ascent']
     message = await ctx.send(f"{emoji} `React to this message to signup for inhouse valorant!` {emoji}")
     await message.add_reaction(emoji)
 
     def check(reaction, user):
-        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 2
-
+        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 10
+   
     try:
-        reaction = await bot.wait_for('reaction_add', check=check)
+        reaction = await bot.wait_for('reaction_add', check = check)
+        print(reaction[1].name)
         await ctx.send("`The lobby has been filled.`")
         response = random.choice(maps)
         await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
+
     except Exception as error:
         print(error)
 
@@ -205,12 +202,7 @@ async def game(ctx):
 
 @bot.command(brief='!map', description='Rolls the map pool')
 async def map(ctx):
-    maps = [
-        'Bind',
-        'Haven',
-        'Split',
-        'Ascent'
-    ]
+    maps = ['Bind', 'Haven', 'Split', 'Ascent']
     emoji = '<:valorant:756270078156210177>'
     response = random.choice(maps)
     await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
