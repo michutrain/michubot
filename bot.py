@@ -57,64 +57,67 @@ async def reload(ctx, extension):
 
 @bot.command(brief='!win <name>', description='Adds a win to designated player')
 async def win(ctx, *args):
-    if len(args) != 1:
+    if len(args) < 1:
         await ctx.send("Please provide a name `!win <name>`")
         return
-    name = args[0].capitalize()
-    if name in scores:
-        scores[name]["win"] += 1
-        save()
-        await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
-    else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")
+    for name in args:
+        name = name.capitalize()
+        if name in scores:
+            scores[name]["win"] += 1
+            save()
+            await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
+        else:
+            await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!unwin <name>', description='Removes a win from a designated player')
 async def unwin(ctx, *args):
-    if len(args) != 1:
+    if len(args) < 1:
         await ctx.send("Please provide a name `!win <name>`")
         return
-    name = args[0].capitalize()
-    if name in scores:
-        if scores[name]["win"] == 0:
-            await ctx.send(f"{name} is already at 0 wins.")
+    for name in args:
+        name = name.capitalize()
+        if name in scores:
+            if scores[name]["win"] == 0:
+                await ctx.send(f"{name} is already at 0 wins.")
+            else:
+                scores[name]["win"] -= 1
+                save()
+                await ctx.send(f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
         else:
-            scores[name]["win"] -= 1
-            save()
-            await ctx.send(f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
-    else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")
+            await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
 async def lose(ctx, *args):
-    if len(args) != 1:
+    if len(args) < 1:
         await ctx.send("Please provide a name `!loss <name>`")
-        return
-    name = args[0].capitalize()
-    if name in scores:
-        scores[name]["loss"] += 1
-        save()
-        await ctx.send(f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
-    else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")
+    for name in args:
+        name = name.capitalize()
+        if name in scores:
+            scores[name]["loss"] += 1
+            save()
+            await ctx.send(f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
+        else:
+            await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!unlose <name>', description='Removes a loss from a designated player')
 async def unlose(ctx, *args):
-    if len(args) != 1:
+    if len(args) < 1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
-    name = args[0].capitalize()
-    if name in scores:
-        if scores[name]["loss"] == 0:
-            await ctx.send(f"{name} is already at 0 losses.")
+    for name in args:
+        name = name.capitalize()
+        if name in scores:
+            if scores[name]["loss"] == 0:
+                await ctx.send(f"{name} is already at 0 losses.")
+            else:
+                scores[name]["loss"] -= 1
+                save()
+                await ctx.send(f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
         else:
-            scores[name]["loss"] -= 1
-            save()
-            await ctx.send(f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
-    else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")
+            await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!add <name>', description='Adds a player to the leaderboards')
@@ -122,13 +125,14 @@ async def add(ctx, *args):
     if len(args) != 1:
         await ctx.send("Please provide a name `!add <name>`")
         return
-    name = args[0].capitalize()
-    if name not in scores:
-        scores[name] = {"win": 0, "loss": 0}
-        save()
-        await ctx.send(f"{name} has been added to the leaderboards.")
-    else:
-        await ctx.send(f"{name} already exists in the leaderboards.")
+    for name in args:
+        name = name.capitalize()
+        if name not in scores:
+            scores[name] = {"win": 0, "loss": 0}
+            save()
+            await ctx.send(f"{name} has been added to the leaderboards.")
+        else:
+            await ctx.send(f"{name} already exists in the leaderboards.")
 
 
 @bot.command(brief='!remove <name>', description='Removes a player from the leaderboards')
@@ -136,20 +140,25 @@ async def remove(ctx, *args):
     if len(args) != 1:
         await ctx.send("Please provide a name `!remove <name>`")
         return
-    name = args[0].capitalize()
-    if name in scores:
-        del scores[name]
-        save()
-        await ctx.send(f"{name} has been removed from the leaderboards.")
-    else:
-        await ctx.send(f"{name} does not exist in the leaderboards.")
+    for name in args:
+        name = name.capitalize()
+        if name in scores:
+            del scores[name]
+            save()
+            await ctx.send(f"{name} has been removed from the leaderboards.")
+        else:
+            await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(pass_context=True, aliases=['leaderboard', 'show', 'score', 'lits', 'lsit'], brief='!list', description='Displays the leaderboard')
 async def list(ctx):
-    rows = [[key, scores[key]["win"], scores[key]["loss"]] for key in scores]
-    rows.sort(key=lambda x: x[1], reverse=True)
-    cols = ["Player", "Wins", "Losses"]
+
+    def ratio(key):
+        return (1.0*scores[key]["win"]/(scores[key]["win"]+scores[key]["loss"]) if scores[key]["win"]+scores[key]["loss"] > 0 else 0)
+
+    rows = [[key, scores[key]["win"], scores[key]["loss"], "{:.2f}".format(ratio(key)), 1200+(scores[key]["win"]*11)-(scores[key]["loss"]*9)] for key in scores]
+    rows.sort(key=lambda x: x[4], reverse=True)
+    cols = ["Player", "Wins", "Losses", "W/L Ratio", "Elo"]
     rows = [cols] + rows
 
     for col in range(len(cols)):
@@ -160,12 +169,9 @@ async def list(ctx):
 
     row_strings = ["║ " + " │ ".join(row) + " ║" for row in rows]
 
-    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1])
-                                                                                 for s in rows]) + 2) + "╤" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╗"
-    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1])
-                                                                                 for s in rows]) + 2) + "┼" + "─" * (max([len(s[2]) for s in rows]) + 2) + "╢"
-    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1])
-                                                                                 for s in rows]) + 2) + "╧" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╝"
+    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╗"
+    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[2]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[3]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[4]) for s in rows]) + 2) + "╢"
+    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╝"
 
     row_strings = [line1] + row_strings[:1] + \
         [line2] + row_strings[1:] + [line3]
@@ -174,7 +180,7 @@ async def list(ctx):
                         description=f"```{bigBlockOfText}```", color=0x930101)
     ret.set_thumbnail(
         url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
-    ret.set_footer(text="Type !help for a list of commands")
+    ret.set_footer(text="Type !help for a list of commands                                             Base Elo at 1200")
     await ctx.send(embed=ret)
 
 
