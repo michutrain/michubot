@@ -36,7 +36,8 @@ DB_NAME = set when configuring db
 ## planned🚧
 - ~~sorting by win~~
 - ~~map randomizer~~
-- win loss ratio
-- elo ladder based on scaled win loss
+- ~~win loss ratio~~
+- ~~elo ladder based on scaled win loss~~
+- matchmaking randomizer based on who's signed up
 - more bot features!!!
 stay tuned!
