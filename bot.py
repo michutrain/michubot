@@ -28,10 +28,11 @@ async def on_ready():
 
 @bot.command(brief='!ping', description='Pings the bot')
 async def ping(ctx):
+    print(f"ping: {round(bot.latency * 1000)}ms", flush=True)
     await ctx.send(f"`pong! the connection speed is {round (bot.latency * 1000)}ms`")
 
 
-@bot.command(brief='!clear <number>', description='Deletes the previous n messages')
+@bot.command(pass_context=True, aliases=['delete'], brief='!clear <number>', description='Deletes the previous n messages')
 async def clear(ctx, amount=1):
     await ctx.channel.purge(limit=amount + 1)
 
@@ -57,6 +58,7 @@ async def reload(ctx, extension):
 
 @bot.command(brief='!win <name>', description='Adds a win to designated player')
 async def win(ctx, *args):
+    print('win', flush=True)
     if len(args) < 1:
         await ctx.send("Please provide a name `!win <name>`")
         return
@@ -72,6 +74,7 @@ async def win(ctx, *args):
 
 @bot.command(brief='!unwin <name>', description='Removes a win from a designated player')
 async def unwin(ctx, *args):
+    print('unwin', flush=True)
     if len(args) < 1:
         await ctx.send("Please provide a name `!win <name>`")
         return
@@ -90,6 +93,7 @@ async def unwin(ctx, *args):
 
 @bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
 async def lose(ctx, *args):
+    print('lose', flush=True)
     if len(args) < 1:
         await ctx.send("Please provide a name `!loss <name>`")
     for name in args:
@@ -104,6 +108,7 @@ async def lose(ctx, *args):
 
 @bot.command(brief='!unlose <name>', description='Removes a loss from a designated player')
 async def unlose(ctx, *args):
+    print('unlose', flush=True)
     if len(args) < 1:
         await ctx.send("Please provide a name `!loss <name>`")
         return
@@ -122,6 +127,7 @@ async def unlose(ctx, *args):
 
 @bot.command(brief='!add <name>', description='Adds a player to the leaderboards')
 async def add(ctx, *args):
+    print('added', flush=True)
     if len(args) != 1:
         await ctx.send("Please provide a name `!add <name>`")
         return
@@ -137,6 +143,7 @@ async def add(ctx, *args):
 
 @bot.command(brief='!remove <name>', description='Removes a player from the leaderboards')
 async def remove(ctx, *args):
+    print('removed', flush=True)
     if len(args) != 1:
         await ctx.send("Please provide a name `!remove <name>`")
         return
@@ -151,14 +158,45 @@ async def remove(ctx, *args):
 
 
 @bot.command(pass_context=True, aliases=['leaderboard', 'show', 'score', 'lits', 'lsit'], brief='!list', description='Displays the leaderboard')
-async def list(ctx):
-
+async def list(ctx, *args):
+    print('list', flush=True)
+    if len(args) == 0:
+        sorter = "Elo"
+    else:
+        sorter = args[0].capitalize()
+    if len(args) > 1:
+        await ctx.send("`!list` to display leaderboard sorted by elo. Otherwise you can sort by: `win, loss, ratio`.")
+        return
+        
     def ratio(key):
-        return (1.0*scores[key]["win"]/(scores[key]["win"]+scores[key]["loss"]) if scores[key]["win"]+scores[key]["loss"] > 0 else 0)
+        return "{:.2f}".format((1.0*scores[key]["win"]/(scores[key]["win"]+scores[key]["loss"]) if scores[key]["win"]+scores[key]["loss"] > 0 else 0))
 
-    rows = [[key, scores[key]["win"], scores[key]["loss"], "{:.2f}".format(ratio(key)), 1200+(scores[key]["win"]*11)-(scores[key]["loss"]*9)] for key in scores]
-    rows.sort(key=lambda x: x[4], reverse=True)
+    def elo(key):
+        wlr = float(ratio(key))
+        base = 1000
+        pos_win =  (scores[key]["win"]  * 5) + round((wlr * 7))
+        pos_loss = (scores[key]["loss"] * 5) + round((wlr * 10))
+        neg_win =  (scores[key]["win"]  * 5) + round((wlr * 10))
+        neg_loss = (scores[key]["loss"] * 5) + round((wlr * 7))
+        if wlr >= 0.5:
+            return base + pos_win - pos_loss
+        else:
+            return base + neg_win - neg_loss
+
     cols = ["Player", "Wins", "Losses", "W/L Ratio", "Elo"]
+    rows = [[key, scores[key]["win"], scores[key]["loss"], ratio(key), elo(key)] for key in scores]
+    
+    if sorter == "Win":
+        rows.sort(key=lambda x: x[1], reverse=True)
+        if sorter == "Loss":
+            rows.sort(key=lambda x: x[2], reverse=True)
+            if sorter == "Kdr" or sorter == "Ratio" or sorter == "W/l":
+                rows.sort(key=lambda x: x[3], reverse=True)
+                if sorter == "Elo":
+                    rows.sort(key=lambda x: x[4], reverse=True)
+    else:
+        rows.sort(key=lambda x: x[4], reverse=True)
+                
     rows = [cols] + rows
 
     for col in range(len(cols)):
@@ -169,23 +207,28 @@ async def list(ctx):
 
     row_strings = ["║ " + " │ ".join(row) + " ║" for row in rows]
 
-    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╗"
-    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[2]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[3]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[4]) for s in rows]) + 2) + "╢"
-    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[2]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╝"
+    line1 = "╔" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╤" + "═" * \
+        (max([len(s[2]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╤" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╗"
+    line2 = "╟" + "─" * (max([len(s[0]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[1]) for s in rows]) + 2) + "┼" + "─" * \
+        (max([len(s[2]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[3]) for s in rows]) + 2) + "┼" + "─" * (max([len(s[4]) for s in rows]) + 2) + "╢"
+    line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╧" + "═" * \
+        (max([len(s[2]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╝"
 
     row_strings = [line1] + row_strings[:1] + \
         [line2] + row_strings[1:] + [line3]
     bigBlockOfText = "\n".join(row_strings)
-    ret = discord.Embed(title="Valorant Leaderboard",
+
+    embed = discord.Embed(title="Valorant Leaderboard",
                         description=f"```{bigBlockOfText}```", color=0x930101)
-    ret.set_thumbnail(
+    embed.set_thumbnail(
         url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
-    ret.set_footer(text="Type !help for a list of commands                                             Base Elo at 1200")
-    await ctx.send(embed=ret)
+    embed.set_footer(text="Type !help for a list of commands                                             Base Elo at 1000")
+    await ctx.send(embed=embed)
 
 
 @bot.command(brief='!game', description='Sends queue message')
 async def game(ctx):
+    print('game', flush=True)
     emoji = '<:valorant:756270078156210177>'
     maps = ['Bind', 'Haven', 'Split', 'Ascent']
     message = await ctx.send(f"{emoji} `React to this message to signup for inhouse valorant!` {emoji}")
@@ -205,9 +248,9 @@ async def game(ctx):
         print(error)
 
 
-
 @bot.command(brief='!map', description='Rolls the map pool')
 async def map(ctx):
+    print('map', flush=True)
     maps = ['Bind', 'Haven', 'Split', 'Ascent']
     emoji = '<:valorant:756270078156210177>'
     response = random.choice(maps)
