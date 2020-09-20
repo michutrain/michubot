@@ -23,12 +23,11 @@ def save():
 
 @bot.event
 async def on_ready():
-    print('bot is live')
-
+    print('bot is live', flush=True)
 
 @bot.command(brief='!ping', description='Pings the bot')
 async def ping(ctx):
-    print(f"ping: {round(bot.latency * 1000)}ms", flush=True)
+    print("a\nb\nc\nd   ", flush=True)
     await ctx.send(f"`pong! the connection speed is {round (bot.latency * 1000)}ms`")
 
 
@@ -169,10 +168,11 @@ async def list(ctx, *args):
         return
         
     def ratio(key):
-        return "{:.2f}".format((1.0*scores[key]["win"]/(scores[key]["win"]+scores[key]["loss"]) if scores[key]["win"]+scores[key]["loss"] > 0 else 0))
+        res = "{:.2f}".format((1.0*scores[key]["win"]/(scores[key]["win"]+scores[key]["loss"]) if scores[key]["win"]+scores[key]["loss"] > 0 else 0))
+        return float(res)
 
     def elo(key):
-        wlr = float(ratio(key))
+        wlr = ratio(key)
         base = 1000
         pos_win =  (scores[key]["win"]  * 5) + round((wlr * 7))
         pos_loss = (scores[key]["loss"] * 5) + round((wlr * 10))
@@ -183,9 +183,8 @@ async def list(ctx, *args):
         else:
             return base + neg_win - neg_loss
 
-    cols = ["Player", "Wins", "Losses", "W/L Ratio", "Elo"]
-    rows = [[key, scores[key]["win"], scores[key]["loss"], ratio(key), elo(key)] for key in scores]
-    
+    cols = ["Player", "W", "L", "W/L", "Elo"]
+    rows = [[key, scores[key]["win"], scores[key]["loss"], str(round(ratio(key)*100))+"%", elo(key)] for key in scores]
     if sorter == "Win":
         rows.sort(key=lambda x: x[1], reverse=True)
         if sorter == "Loss":
@@ -214,38 +213,88 @@ async def list(ctx, *args):
     line3 = "╚" + "═" * (max([len(s[0]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[1]) for s in rows]) + 2) + "╧" + "═" * \
         (max([len(s[2]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[3]) for s in rows]) + 2) + "╧" + "═" * (max([len(s[4]) for s in rows]) + 2) + "╝"
 
-    row_strings = [line1] + row_strings[:1] + \
-        [line2] + row_strings[1:] + [line3]
-    bigBlockOfText = "\n".join(row_strings)
+    row_strings = [line1] + row_strings[:1] + [line2] + row_strings[1:] + [line3]
+    leaderboard = "\n".join(row_strings)
 
     embed = discord.Embed(title="Valorant Leaderboard",
-                        description=f"```{bigBlockOfText}```", color=0x930101)
+                        description=f"Base Elo at 1000 \n ```{leaderboard}```", color=0x930101)
     embed.set_thumbnail(
         url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
-    embed.set_footer(text="Type !help for a list of commands                                             Base Elo at 1000")
+    embed.set_footer(text="Type !help for a list of commands")
     await ctx.send(embed=embed)
 
 
 @bot.command(brief='!game', description='Sends queue message')
 async def game(ctx):
+    team1 = []
+    team2 = []
+    team1_str = ""
+    team2_str = ""
+    users = []
     print('game', flush=True)
     emoji = '<:valorant:756270078156210177>'
     maps = ['Bind', 'Haven', 'Split', 'Ascent']
     message = await ctx.send(f"{emoji} `React to this message to signup for inhouse valorant!` {emoji}")
     await message.add_reaction(emoji)
 
-    def check(reaction, user):
-        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 10
-   
-    try:
-        reaction = await bot.wait_for('reaction_add', check = check)
-        print(reaction[1].name)
-        await ctx.send("`The lobby has been filled.`")
-        response = random.choice(maps)
-        await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
+    def signup_check(reaction, user):
+        users.append(user.name)
+        print(users, flush=True)
+        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 3
 
+    try:
+        (reaction, user) = await bot.wait_for('reaction_add', check = signup_check)
+        if 'michu bot' in users:
+            users.remove('michu bot')
+        else:
+            print("foo")
+        # TODO: add option for draft or randomize
+        print(users)
+        i = 0
+        while i < 1:                                                    # test val
+                selected = random.choice(users)
+                team1.append(selected)                                  # for win/lose calculation
+                team1_str += selected                                   # for the embed
+                users.remove(selected)
+                i += 1
+        team2 = users                                                   # for win/lose calculation
+        for user in users:              
+            team2_str += user                                           # for the embed                                      
+        await ctx.send("`The lobby has been filled.`")
+        map = random.choice(maps)
+        print(team1_str, flush=True)
+        print(team2_str, flush=True)
+        print(map, flush=True)
+        embed = discord.Embed(title="Valorant 5v5 Teams", color=0x930101)               # ERROR sometimes happens here???
+        embed.add_field(name="Team 1", value=team1_str, inline=True)                    # 400 Bad Request (error code: 50035): Invalid Form Body
+        embed.add_field(name="Team 2", value=team2_str, inline=True)                    # In embed.fields.1.value: This field is required
+        embed.add_field(name="The map that has been selected for this match:", value=f"{emoji}  {map}  {emoji}", inline=False)
+        embed.set_thumbnail(
+            url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
+        embed.set_footer(text="Match Over: Click the number of the winning team.")
+        teams = await ctx.send(embed=embed)
+        await teams.add_reaction('1️⃣')
+        await teams.add_reaction('2️⃣')
+
+        def finish_check(reaction, user):
+            print(user)
+            return str(reaction) == '1️⃣' or str(reaction) == '2️⃣' and reaction.message.id == teams.id and reaction.count == 2
+
+        try:
+            (reaction2, user2) = await bot.wait_for('reaction_add', check = finish_check)
+            if str(reaction2) == '1️⃣':
+                winner = 1
+            else:
+                winner = 2
+            await ctx.send(f"🎉  `The winner is Team {winner}`  🎉")
+            #------------------------------------------
+            # TODO: HANDLE WIN/LOSS DISTRIBUTION
+            #------------------------------------------
+        except Exception as error:
+            print(error, flush=True)
+            print("inner")
     except Exception as error:
-        print(error)
+        print(error, flush=True)
 
 
 @bot.command(brief='!map', description='Rolls the map pool')
