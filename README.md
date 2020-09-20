@@ -5,7 +5,7 @@
 ## Table of contents
 * [General info](#general-info)
 * [Setup](#setup)
-* [planned🚧](#planned🚧)
+* [planned 🚧](#planned)
 
 ## General info
 wip all purpose bot!
@@ -15,6 +15,9 @@ currently hosting a self managed win/loss leaderboard, titled for inhouse valora
 can be configured to use both a PostgreSQL database or writing to a local json file instead
 
 ## Setup
+download python at https://www.python.org/downloads/
+
+#### Packages
 psycopg2 is only if you're using a PostgreSQL database, skip if you are writing to json
 ```
 $ pip install dotenv
@@ -33,7 +36,12 @@ DB_PASSWORD = set when configuring db
 DB_NAME = set when configuring db
 ```
 
-## planned🚧
+#### Running the Bot
+place the bot.py script in a directory as the leaderboard is written in a file. run with:
+```
+py bot.py
+```
+## planned 🚧
 - ~~sorting by win~~
 - ~~map randomizer~~
 - ~~win loss ratio~~
