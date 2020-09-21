@@ -1,3 +1,4 @@
+import asyncio
 import os
 import discord
 import json
@@ -63,12 +64,17 @@ async def win(ctx, *args):
         return
     for name in args:
         name = name.capitalize()
-        if name in scores:
-            scores[name]["win"] += 1
-            save()
-            await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
-        else:
-            await ctx.send(f"{name} does not exist in the leaderboards.")
+        for user in scores:
+            curr_name = str(scores[user].get('name'))
+            if curr_name == name:
+                scores[user]["win"] += 1
+                save()
+                await ctx.send(f"Win has been added to `{name}`. Total wins for `{name}` are now: `{scores[user]['win']}`")
+                return
+            elif curr_name is None:
+                print(f"user {curr_name} does not have name field yet", flush=True)
+
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!unwin <name>', description='Removes a win from a designated player')
@@ -79,15 +85,21 @@ async def unwin(ctx, *args):
         return
     for name in args:
         name = name.capitalize()
-        if name in scores:
-            if scores[name]["win"] == 0:
-                await ctx.send(f"{name} is already at 0 wins.")
-            else:
-                scores[name]["win"] -= 1
-                save()
-                await ctx.send(f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[name]['win']}`")
-        else:
-            await ctx.send(f"{name} does not exist in the leaderboards.")
+        for user in scores:
+            curr_name = str(scores[user].get('name'))
+            if curr_name == name:
+                if scores[user]["win"] == 0:
+                    await ctx.send(f"{name} is already at 0 wins.")
+                else:
+                    scores[user]["win"] -= 1
+                    save()
+                    await ctx.send(
+                        f"Win has been removed from `{name}`. Total wins for `{name}` are now: `{scores[user]['win']}`")
+                return
+            elif curr_name is None:
+                print(f"user {curr_name} does not have name field yet", flush=True)
+
+    await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
@@ -97,12 +109,18 @@ async def lose(ctx, *args):
         await ctx.send("Please provide a name `!loss <name>`")
     for name in args:
         name = name.capitalize()
-        if name in scores:
-            scores[name]["loss"] += 1
-            save()
-            await ctx.send(f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
-        else:
-            await ctx.send(f"{name} does not exist in the leaderboards.")
+        for user in scores:
+            curr_name = str(scores[user].get('name'))
+            if curr_name == name:
+                scores[user]["loss"] += 1
+                save()
+                await ctx.send(
+                    f"Loss has been added to `{name}`. Total losses for `{name}` are now: `{scores[user]['loss']}`")
+                return
+            elif curr_name is None:
+                print(f"user {curr_name} does not have name field yet", flush=True)
+
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!unlose <name>', description='Removes a loss from a designated player')
@@ -113,47 +131,79 @@ async def unlose(ctx, *args):
         return
     for name in args:
         name = name.capitalize()
-        if name in scores:
-            if scores[name]["loss"] == 0:
-                await ctx.send(f"{name} is already at 0 losses.")
-            else:
-                scores[name]["loss"] -= 1
-                save()
-                await ctx.send(f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[name]['loss']}`")
-        else:
-            await ctx.send(f"{name} does not exist in the leaderboards.")
+        for user in scores:
+            curr_name = str(scores[user].get('name'))
+            if curr_name == name:
+                if scores[user]["loss"] == 0:
+                    await ctx.send(f"{name} is already at 0 losses.")
+                else:
+                    scores[user]["loss"] -= 1
+                    save()
+                    await ctx.send(
+                        f"Loss has been removed from `{name}`. Total losses for `{name}` are now: `{scores[user]['loss']}`")
+                return
+            elif curr_name is None:
+                print(f"user {curr_name} does not have name field yet", flush=True)
+
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
-@bot.command(brief='!add <name>', description='Adds a player to the leaderboards')
+@bot.command(brief='!add <name>', description='Adds a player to the leaderboards, using the user ID as a dictionary key')
 async def add(ctx, *args):
     print('added', flush=True)
+    emoji = '🎁'
     if len(args) != 1:
         await ctx.send("Please provide a name `!add <name>`")
         return
-    for name in args:
-        name = name.capitalize()
-        if name not in scores:
-            scores[name] = {"win": 0, "loss": 0}
-            save()
-            await ctx.send(f"{name} has been added to the leaderboards.")
+    name = args[0].capitalize()
+    message = await ctx.send(f"{emoji} `React to this message to add yourself to the leaderboard!` {emoji}")
+    await message.add_reaction(emoji)
+
+    # handler function for when user reacts to the bot's message
+    # function will add reacting user to the leaderboard, under the name given on function call
+    async def handle_user_import(this_user):
+        if str(this_user.id) in scores.keys() or this_user.id in scores.keys():
+            await user.send("You have already been added to the leaderboard")
+            return False
         else:
-            await ctx.send(f"{name} already exists in the leaderboards.")
+            scores[this_user.id] = {"win": 0, "loss": 0, "name": name}
+            save()
+            await user.send(f"You have been added successfully to the leaderboard under {name}!")
+            await ctx.send(f"{this_user.name} has been added to the leaderboard under {name}!")
+            return True
 
+    # retry logic to handle when the wrong user reacts to the add message
+    while True:
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=120, check= lambda reaction, user: user != bot.user)
+            if await (handle_user_import(user)):
+                break
+            else:
+                continue
+        except Exception as error:
+            if error is TimeoutError:
+                print("Reaction script has timed out", flush=True)
+                await ctx.send("The add script has timed out, please run again to update more users")
+            else:
+                print(error, flush=True)
+            break
 
-@bot.command(brief='!remove <name>', description='Removes a player from the leaderboards')
+@bot.command(brief='!remove <name>', description='Removes a player with the given name from the leaderboards')
 async def remove(ctx, *args):
     print('removed', flush=True)
     if len(args) != 1:
         await ctx.send("Please provide a name `!remove <name>`")
         return
-    for name in args:
-        name = name.capitalize()
-        if name in scores:
-            del scores[name]
+    name = args[0].capitalize()
+    for user in scores:
+        curr_name = str(scores[user].get('name'))
+        if curr_name == name:
+            print(scores[user], flush=True)
+            del scores[user]
             save()
             await ctx.send(f"{name} has been removed from the leaderboards.")
-        else:
-            await ctx.send(f"{name} does not exist in the leaderboards.")
+            return
+    await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(pass_context=True, aliases=['leaderboard', 'show', 'score', 'lits', 'lsit'], brief='!list', description='Displays the leaderboard')
@@ -305,5 +355,71 @@ async def map(ctx):
     response = random.choice(maps)
     await ctx.send(f"{emoji} The map `{response}` has been selected for this match. {emoji}")
 
+
+@bot.command(brief='!update', description='Migrates the user to use the new ID system')
+async def update(ctx):
+    print('migrate_user', flush=True)
+    emoji = '👍'
+    message = await ctx.send(f"{emoji} `React to this message to update your user profile!` {emoji}")
+    await message.add_reaction(emoji)
+
+    # Handles a reaction from a user, and ensures that
+    #   1) the reaction is not from the bot, and
+    #   2) the correct message is being reacted to
+
+    def handleReaction(reaction, user):
+        return user != bot.user and reaction.message.id == message.id
+
+    # We only break out of this loop when the method times out.
+    # This loop will create a new call to handle_migration each time a user reacts to the message.
+    while True:
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=120,
+                                                check=handleReaction)
+            asyncio.create_task(handle_migration(user))
+        except Exception as error:
+            if error is TimeoutError:
+                print("Reaction script has timed out", flush=True)
+                await ctx.send("The update script has timed out, please run again to update more users")
+            else:
+                print(error, flush=True)
+            break
+
+
+@bot.event
+async def handle_migration(curr_user):
+    print('handle_migration', flush=True)
+
+    # Handler that responds to a user's reply to the bot, and performs the leaderboard migration
+    # from user's plain-text name to the user's ID
+    async def perform_migration(message):
+        reply_content = message.content
+        if str(curr_user.id) in scores.keys() or curr_user.id in scores.keys():
+            await curr_user.send(f"Your user has already been migrated, under {scores.get(str(curr_user.id))['name']}.")
+            return True
+        elif reply_content in scores:
+            scores[curr_user.id] = dict(scores[reply_content], name=reply_content)
+            del scores[reply_content]
+            save()
+            await curr_user.send("Your user profile has been successfully updated")
+            return True
+        elif reply_content == "Cancel":
+            await curr_user.send("Leaderboard update has been cancelled.")
+            return True
+        else:
+            await curr_user.send("This is not a valid username, please try again. "
+                                 "If you would like to cancel the user update, please type 'Cancel'")
+            return False
+
+    await curr_user.send("What is your name on the leaderboard?")
+
+    # Retry loop to handle a user replying with the wrong name
+    while True:
+        reply = await bot.wait_for("message",
+                                   check=lambda reply: reply.author == curr_user and reply.author != bot.user)
+        if await perform_migration(reply) is True:
+            return
+        else:
+            continue
 
 bot.run(TOKEN)
