@@ -20,7 +20,7 @@ download python at https://www.python.org/downloads/
 #### Packages
 psycopg2 is only if you're using a PostgreSQL database, skip if you are writing to json
 ```
-$ pip install dotenv
+$ pip install python-dotenv
 $ pip install discord.py
 *********************
 $ pip install psycopg2
