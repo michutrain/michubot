@@ -240,7 +240,7 @@ async def game(ctx):
     def signup_check(reaction, user):
         users.append(user.name)
         print(users, flush=True)
-        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 3
+        return str(reaction) == emoji and reaction.message.id == message.id and reaction.count == 11
 
     try:
         (reaction, user) = await bot.wait_for('reaction_add', check = signup_check)
@@ -251,23 +251,23 @@ async def game(ctx):
         # TODO: add option for draft or randomize
         print(users)
         i = 0
-        while i < 1:                                                    # test val
+        while i < 5:                                                             # test val
                 selected = random.choice(users)
-                team1.append(selected)                                  # for win/lose calculation
-                team1_str += selected                                   # for the embed
+                team1.append(selected)                                           # for win/lose calculation
+                team1_str += selected + "\n"                                     # for the embed
                 users.remove(selected)
                 i += 1
-        team2 = users                                                   # for win/lose calculation
+        team2 = users                                                             # for win/lose calculation
         for user in users:              
-            team2_str += user                                           # for the embed                                      
+            team2_str += user + "\n"                                              # for the embed                                      
         await ctx.send("`The lobby has been filled.`")
         map = random.choice(maps)
         print(team1_str, flush=True)
         print(team2_str, flush=True)
         print(map, flush=True)
-        embed = discord.Embed(title="Valorant 5v5 Teams", color=0x930101)               # ERROR sometimes happens here???
-        embed.add_field(name="Team 1", value=team1_str, inline=True)                    # 400 Bad Request (error code: 50035): Invalid Form Body
-        embed.add_field(name="Team 2", value=team2_str, inline=True)                    # In embed.fields.1.value: This field is required
+        embed = discord.Embed(title="Valorant 5v5 Teams", color=0x930101)
+        embed.add_field(name="Team 1", value=team1_str, inline=True)
+        embed.add_field(name="Team 2", value=team2_str, inline=True)
         embed.add_field(name="The map that has been selected for this match:", value=f"{emoji}  {map}  {emoji}", inline=False)
         embed.set_thumbnail(
             url="https://cdn.discordapp.com/attachments/755958167908909108/756073229671596103/88253746_110183627255722_3150517730348630016_n.png")
