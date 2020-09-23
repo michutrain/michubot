@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='@')
 
 if os.path.exists("leaderboard"):
     scores = json.load(open("leaderboard", "r"))
@@ -20,18 +20,33 @@ else:
 def save():
     json.dump(scores, open("leaderboard", "w+"))
 
+def owner_check(**perms):
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.guild.owner_id == ctx.author.id
+    return commands.check(extended_check)
+
+
+def channel_check(**perms):
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.channel.name == ('botcommands') or ctx.channel.name == ('valorant-standings') or ctx.channel.name == ('bot') or ctx.channel.name == ('general')
+    return commands.check(extended_check)
 
 @bot.event
 async def on_ready():
     print('bot is live', flush=True)
 
 @bot.command(brief='!ping', description='Pings the bot')
+@channel_check()
 async def ping(ctx):
-    print("a\nb\nc\nd   ", flush=True)
     await ctx.send(f"`pong! the connection speed is {round (bot.latency * 1000)}ms`")
 
 
 @bot.command(pass_context=True, aliases=['delete'], brief='!clear <number>', description='Deletes the previous n messages')
+@owner_check()
 async def clear(ctx, amount=1):
     await ctx.channel.purge(limit=amount + 1)
 
@@ -56,6 +71,8 @@ async def reload(ctx, extension):
 
 
 @bot.command(brief='!win <name>', description='Adds a win to designated player')
+@owner_check()
+@channel_check()
 async def win(ctx, *args):
     print('win', flush=True)
     if len(args) < 1:
@@ -72,6 +89,8 @@ async def win(ctx, *args):
 
 
 @bot.command(brief='!unwin <name>', description='Removes a win from a designated player')
+@owner_check()
+@channel_check()
 async def unwin(ctx, *args):
     print('unwin', flush=True)
     if len(args) < 1:
@@ -91,6 +110,8 @@ async def unwin(ctx, *args):
 
 
 @bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
+@owner_check()
+@channel_check()
 async def lose(ctx, *args):
     print('lose', flush=True)
     if len(args) < 1:
@@ -106,6 +127,8 @@ async def lose(ctx, *args):
 
 
 @bot.command(brief='!unlose <name>', description='Removes a loss from a designated player')
+@owner_check()
+@channel_check()
 async def unlose(ctx, *args):
     print('unlose', flush=True)
     if len(args) < 1:
@@ -125,6 +148,8 @@ async def unlose(ctx, *args):
 
 
 @bot.command(brief='!add <name>', description='Adds a player to the leaderboards')
+@owner_check()
+@channel_check()
 async def add(ctx, *args):
     print('added', flush=True)
     if len(args) != 1:
@@ -141,6 +166,8 @@ async def add(ctx, *args):
 
 
 @bot.command(brief='!remove <name>', description='Removes a player from the leaderboards')
+@owner_check()
+@channel_check()
 async def remove(ctx, *args):
     print('removed', flush=True)
     if len(args) != 1:
@@ -157,6 +184,7 @@ async def remove(ctx, *args):
 
 
 @bot.command(pass_context=True, aliases=['leaderboard', 'show', 'score', 'lits', 'lsit'], brief='!list', description='Displays the leaderboard')
+@channel_check()
 async def list(ctx, *args):
     print('list', flush=True)
     if len(args) == 0:
