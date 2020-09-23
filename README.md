@@ -46,6 +46,7 @@ py bot.py
 - ~~map randomizer~~
 - ~~win loss ratio~~
 - ~~elo ladder based on scaled win loss~~
-- matchmaking randomizer based on who's signed up
+- ~~matchmaking randomizer based on who's signed up~~
+- generate users based on discord id instead of entered string
 - more bot features!!!
 stay tuned!
