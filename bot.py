@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-bot = commands.Bot(command_prefix='@')
+bot = commands.Bot(command_prefix='#')
 
 if os.path.exists("leaderboard"):
     scores = json.load(open("leaderboard", "r"))
@@ -33,7 +33,7 @@ def channel_check(**perms):
     async def extended_check(ctx):
         if ctx.guild is None:
             return False
-        return ctx.channel.name == ('botcommands') or ctx.channel.name == ('valorant-standings') or ctx.channel.name == ('bot') or ctx.channel.name == ('general')
+        return ctx.channel.name == ('botcommands') or ctx.channel.name == ('valorant-standings') or ctx.channel.name == ('bot') or ctx.channel.name == ('general') or ctx.channel.name == ('glizzy')
     return commands.check(extended_check)
 
 @bot.event
@@ -118,7 +118,7 @@ async def unwin(ctx, *args):
             elif curr_name is None:
                 print(f"user {curr_name} does not have name field yet", flush=True)
 
-    await ctx.send(f"{name} does not exist in the leaderboards.")
+        await ctx.send(f"{name} does not exist in the leaderboards.")
 
 
 @bot.command(brief='!lost <name>', description='Adds a loss to a designated player')
